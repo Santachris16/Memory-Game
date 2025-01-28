@@ -1,0 +1,85 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #a4a4aa;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#game-wrapper {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    min-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #333;
+}
+
+#controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 10px 0;
+}
+
+select, button {
+    padding: 5px;
+    font-size: 1em;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #db3434;
+    color: white;
+    cursor: pointer;
+}
+
+#game-container {
+    display: grid;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px auto;
+}
+
+.card {
+    width: 60px;
+    height: 60px;
+    background-color: #db3434;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.card.flipped {
+    background-color: #2ecc71;
+    pointer-events: none;
+    transform: scale(1.1);
+}
+
+#move-counter, #timer {
+    font-size: 0.9em;
+    margin: 10px 0;
+    color: #333;
+}
+
+#game-over {
+    margin: 10px 0;
+    font-size: 1.2em;
+    color: #e74c3c;
+}
