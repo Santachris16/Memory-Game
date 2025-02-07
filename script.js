@@ -36,29 +36,32 @@ function getCookie(name) {
 }
 
 // Start game (load from saved state or start fresh)
-function startGame() {
+function startGame(loadFromSavedState = true) {
     resetGame();
 
     const savedDifficulty = getCookie("gameDifficulty");
     const savedOrder = getCookie("cardOrder");
 
-    if (savedDifficulty) selectedDifficulty = savedDifficulty;
+    if (savedDifficulty && loadFromSavedState) selectedDifficulty = savedDifficulty;
     difficultySelector.value = selectedDifficulty;
 
     const size = selectedDifficulty.split("x").map(Number);
 
-    // Use saved card order if available, otherwise shuffle new cards
-    if (savedOrder) {
+    // Load saved card order if available and allowed, otherwise create new cards
+    if (savedOrder && loadFromSavedState) {
         cards = savedOrder;
     } else {
         createCards(size[0] * size[1]);
-        setCookie("cardOrder", cards, 1);
+        setCookie("cardOrder", cards, 1);  // Save the shuffled card order
     }
 
     setGridSize(size);
     renderCards();
     startTimer();
-    loadGameState();
+
+    if (loadFromSavedState) {
+        loadGameState();
+    }
 }
 
 // Reset game state but keep difficulty
@@ -205,28 +208,20 @@ window.addEventListener("storage", event => {
 difficultySelector.addEventListener("change", () => {
     selectedDifficulty = difficultySelector.value;
     setCookie("gameDifficulty", selectedDifficulty, 1);
-    startGame();
+    clearGameState();
+    startGame(false);  // Start fresh game without loading previous state
 });
 
 // Event listener for New Game button
 restartBtn.addEventListener("click", () => {
     clearGameState();
-    shuffleAndStartGame();
+    startGame(false);  // Start a new shuffled game
 });
 
 // Clear game state without affecting difficulty
 function clearGameState() {
     setCookie("gameState", null, -1);
     setCookie("cardOrder", null, -1);
-}
-
-// Shuffle and start a new game
-function shuffleAndStartGame() {
-    resetGame();
-    createCards(difficultySelector.value.split("x").reduce((a, b) => a * b));
-    setCookie("cardOrder", cards, 1);
-    renderCards();
-    startTimer();
 }
 
 // Initialize game on page load
