@@ -11,10 +11,9 @@ let matchedCards = 0;
 let moves = 0;
 let timer;
 let time = 0;
-let selectedDifficulty = "4x4"; // Default
-let selectedStyle = "default"; // Default card style
+let selectedDifficulty = "4x4"; // Default difficulty
 
-// Function to set a cookie
+// Cookie utility functions
 function setCookie(name, value, days) {
     let expires = "";
     if (days) {
@@ -25,7 +24,6 @@ function setCookie(name, value, days) {
     document.cookie = name + "=" + JSON.stringify(value) + expires + "; path=/";
 }
 
-// Function to get a cookie
 function getCookie(name) {
     let cookies = document.cookie.split("; ");
     for (let cookie of cookies) {
@@ -37,28 +35,24 @@ function getCookie(name) {
     return null;
 }
 
-// Start game
+// Start game (load from saved state or start fresh)
 function startGame() {
     resetGame();
 
-    // Load difficulty and style from cookies if available
     const savedDifficulty = getCookie("gameDifficulty");
-    const savedStyle = getCookie("cardStyle");
     const savedOrder = getCookie("cardOrder");
 
     if (savedDifficulty) selectedDifficulty = savedDifficulty;
-    if (savedStyle) selectedStyle = savedStyle;
-
     difficultySelector.value = selectedDifficulty;
 
     const size = selectedDifficulty.split("x").map(Number);
-    
-    // Use saved card order if available, otherwise create a new shuffled deck
+
+    // Use saved card order if available, otherwise shuffle new cards
     if (savedOrder) {
         cards = savedOrder;
     } else {
         createCards(size[0] * size[1]);
-        setCookie("cardOrder", cards, 1);  // Save the shuffled card order
+        setCookie("cardOrder", cards, 1);
     }
 
     setGridSize(size);
@@ -67,35 +61,39 @@ function startGame() {
     loadGameState();
 }
 
-// Reset game (DOES NOT reset difficulty/style)
+// Reset game state but keep difficulty
 function resetGame() {
     clearInterval(timer);
     flippedCards = [];
     cards = [];
+    moves = 0;
+    matchedCards = 0;
+    time = 0;
     moveCounter.textContent = "Moves: 0";
+    timerDisplay.textContent = "Time: 00:00";
     gameOverMessage.textContent = "";
     gameContainer.innerHTML = "";
 }
 
-// Create cards and shuffle them
+// Create and shuffle cards
 function createCards(numCards) {
     const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").slice(0, numCards / 2);
     cards = [...symbols, ...symbols];
-    cards.sort(() => Math.random() - 0.5); // Shuffle cards
+    cards.sort(() => Math.random() - 0.5);
 }
 
-// Adjust the grid dynamically for horizontal layout
+// Set grid size dynamically
 function setGridSize(size) {
-    let [rows, cols] = size;
+    const [rows, cols] = size;
     gameContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     gameContainer.style.gridTemplateRows = `repeat(${rows}, auto)`;
 }
 
-// Render cards
+// Render cards on the grid
 function renderCards() {
     cards.forEach((symbol, index) => {
         const card = document.createElement("div");
-        card.classList.add("card", selectedStyle);
+        card.classList.add("card");
         card.dataset.symbol = symbol;
         card.dataset.index = index;
 
@@ -104,7 +102,7 @@ function renderCards() {
     });
 }
 
-// Handle card click
+// Handle card flipping logic
 function handleCardClick(event) {
     const card = event.target;
 
@@ -117,7 +115,7 @@ function handleCardClick(event) {
     if (flippedCards.length === 2) {
         moves++;
         moveCounter.textContent = `Moves: ${moves}`;
-        updateTotalMoves(); // Update global move counter
+        updateTotalMoves(); // Track moves across tabs
 
         if (flippedCards[0].dataset.symbol === flippedCards[1].dataset.symbol) {
             flippedCards = [];
@@ -129,7 +127,7 @@ function handleCardClick(event) {
             }
         } else {
             setTimeout(() => {
-                flippedCards.forEach((card) => {
+                flippedCards.forEach(card => {
                     card.textContent = "";
                     card.classList.remove("flipped");
                 });
@@ -141,7 +139,7 @@ function handleCardClick(event) {
     saveGameState();
 }
 
-// Start timer
+// Start and update the timer
 function startTimer() {
     clearInterval(timer);
     timer = setInterval(() => {
@@ -153,7 +151,7 @@ function startTimer() {
     }, 1000);
 }
 
-// Save the current game state in cookies
+// Save game state to cookies
 function saveGameState() {
     const gameState = {
         moves: moves,
@@ -161,13 +159,12 @@ function saveGameState() {
         matchedCards: matchedCards,
         flippedIndices: Array.from(document.querySelectorAll(".flipped")).map(card => card.dataset.index),
         difficulty: selectedDifficulty,
-        style: selectedStyle,
-        cardOrder: cards // Save the exact card order
+        cardOrder: cards
     };
     setCookie("gameState", gameState, 1);
 }
 
-// Load the game state from cookies
+// Load game state from cookies
 function loadGameState() {
     const gameState = getCookie("gameState");
     if (!gameState) return;
@@ -175,15 +172,14 @@ function loadGameState() {
     moves = gameState.moves;
     time = gameState.time;
     matchedCards = gameState.matchedCards;
-    selectedDifficulty = gameState.difficulty;
-    selectedStyle = gameState.style;
-    cards = gameState.cardOrder; // Restore the card order
+    cards = gameState.cardOrder;
 
-    difficultySelector.value = selectedDifficulty;
     moveCounter.textContent = `Moves: ${moves}`;
-    timerDisplay.textContent = `Time: ${String(Math.floor(time / 60)).padStart(2, "0")}:${String(time % 60).padStart(2, "0")}`;
+    const minutes = String(Math.floor(time / 60)).padStart(2, "0");
+    const seconds = String(time % 60).padStart(2, "0");
+    timerDisplay.textContent = `Time: ${minutes}:${seconds}`;
 
-    document.querySelectorAll(".card").forEach((card) => {
+    document.querySelectorAll(".card").forEach(card => {
         if (gameState.flippedIndices.includes(card.dataset.index)) {
             card.textContent = card.dataset.symbol;
             card.classList.add("flipped");
@@ -191,39 +187,47 @@ function loadGameState() {
     });
 }
 
-// Update global total move count across tabs
+// Track total moves across tabs
 function updateTotalMoves() {
     let totalMoves = localStorage.getItem("totalMoves");
     totalMoves = totalMoves ? parseInt(totalMoves) + 1 : 1;
     localStorage.setItem("totalMoves", totalMoves);
 }
 
-// Listen for changes in total move count across tabs
-window.addEventListener("storage", (event) => {
+// Listen for changes in total moves across tabs
+window.addEventListener("storage", event => {
     if (event.key === "totalMoves") {
         console.log(`Total moves updated across tabs: ${event.newValue}`);
     }
 });
 
-// Save difficulty when changed
+// Event listener for difficulty change
 difficultySelector.addEventListener("change", () => {
     selectedDifficulty = difficultySelector.value;
     setCookie("gameDifficulty", selectedDifficulty, 1);
-    startGame(); // Restart with the same difficulty
+    startGame();
 });
 
-// Save style selection (if you have different card styles)
-function setCardStyle(style) {
-    selectedStyle = style;
-    setCookie("cardStyle", selectedStyle, 1);
-    document.querySelectorAll(".card").forEach(card => {
-        card.classList.remove("default", "fancy"); // Remove other styles
-        card.classList.add(selectedStyle);
-    });
+// Event listener for New Game button
+restartBtn.addEventListener("click", () => {
+    clearGameState();
+    shuffleAndStartGame();
+});
+
+// Clear game state without affecting difficulty
+function clearGameState() {
+    setCookie("gameState", null, -1);
+    setCookie("cardOrder", null, -1);
 }
 
-// Event listeners
-restartBtn.addEventListener("click", startGame);
+// Shuffle and start a new game
+function shuffleAndStartGame() {
+    resetGame();
+    createCards(difficultySelector.value.split("x").reduce((a, b) => a * b));
+    setCookie("cardOrder", cards, 1);
+    renderCards();
+    startTimer();
+}
 
-// Initialize the game
+// Initialize game on page load
 startGame();
