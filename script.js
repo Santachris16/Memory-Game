@@ -88,8 +88,37 @@ function createCards(numCards) {
 // Set grid size dynamically
 function setGridSize(size) {
     const [rows, cols] = size;
+
+    // Dynamically adjust the grid based on difficulty
     gameContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    gameContainer.style.gridTemplateRows = `repeat(${rows}, auto)`;
+    gameContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+    // Adjust card size for larger grids (6x6 or 8x8)
+    adjustCardSize(rows, cols);
+}
+
+// Adjust card sizes for different grid sizes
+function adjustCardSize(rows, cols) {
+    const totalCards = rows * cols;
+    const cards = document.querySelectorAll('.card');
+
+    // Reset any previously applied dynamic sizes
+    cards.forEach(card => {
+        card.style.width = '';
+        card.style.height = '';
+    });
+
+    if (totalCards > 16 && totalCards <= 36) { // Medium (6x6)
+        cards.forEach(card => {
+            card.style.width = '60px';
+            card.style.height = '60px';
+        });
+    } else if (totalCards > 36) { // Hard (8x8)
+        cards.forEach(card => {
+            card.style.width = '50px';
+            card.style.height = '50px';
+        });
+    }
 }
 
 // Render cards on the grid
