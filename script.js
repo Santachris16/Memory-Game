@@ -42,16 +42,25 @@ function startGame() {
     resetGame();
 
     // Load difficulty and style from cookies if available
-    let savedDifficulty = getCookie("gameDifficulty");
-    let savedStyle = getCookie("cardStyle");
-    
+    const savedDifficulty = getCookie("gameDifficulty");
+    const savedStyle = getCookie("cardStyle");
+    const savedOrder = getCookie("cardOrder");
+
     if (savedDifficulty) selectedDifficulty = savedDifficulty;
     if (savedStyle) selectedStyle = savedStyle;
 
     difficultySelector.value = selectedDifficulty;
 
     const size = selectedDifficulty.split("x").map(Number);
-    createCards(size[0] * size[1]);
+    
+    // Use saved card order if available, otherwise create a new shuffled deck
+    if (savedOrder) {
+        cards = savedOrder;
+    } else {
+        createCards(size[0] * size[1]);
+        setCookie("cardOrder", cards, 1);  // Save the shuffled card order
+    }
+
     setGridSize(size);
     renderCards();
     startTimer();
@@ -68,11 +77,11 @@ function resetGame() {
     gameContainer.innerHTML = "";
 }
 
-// Create cards
+// Create cards and shuffle them
 function createCards(numCards) {
     const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").slice(0, numCards / 2);
     cards = [...symbols, ...symbols];
-    cards.sort(() => Math.random() - 0.5);
+    cards.sort(() => Math.random() - 0.5); // Shuffle cards
 }
 
 // Adjust the grid dynamically for horizontal layout
@@ -146,20 +155,21 @@ function startTimer() {
 
 // Save the current game state in cookies
 function saveGameState() {
-    let gameState = {
+    const gameState = {
         moves: moves,
         time: time,
         matchedCards: matchedCards,
         flippedIndices: Array.from(document.querySelectorAll(".flipped")).map(card => card.dataset.index),
         difficulty: selectedDifficulty,
-        style: selectedStyle
+        style: selectedStyle,
+        cardOrder: cards // Save the exact card order
     };
     setCookie("gameState", gameState, 1);
 }
 
 // Load the game state from cookies
 function loadGameState() {
-    let gameState = getCookie("gameState");
+    const gameState = getCookie("gameState");
     if (!gameState) return;
 
     moves = gameState.moves;
@@ -167,6 +177,7 @@ function loadGameState() {
     matchedCards = gameState.matchedCards;
     selectedDifficulty = gameState.difficulty;
     selectedStyle = gameState.style;
+    cards = gameState.cardOrder; // Restore the card order
 
     difficultySelector.value = selectedDifficulty;
     moveCounter.textContent = `Moves: ${moves}`;
